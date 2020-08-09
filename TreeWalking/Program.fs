@@ -1,20 +1,20 @@
 ﻿open System
 open System.IO
+open Scanner
 
 let run (sourceCode:string) =
-    printfn "run"
+    scanTokens sourceCode |> List.map (printfn "%s") |> ignore
 
 let runPrompt () =
-    Console.R
+    printfn ">"
+    Console.ReadLine() |> run
 
 let runFile path =
     File.ReadAllText path
     |> run
-    printfn "runFile"
 
 [<EntryPoint>]
 let main argv =
-
     if argv.Length > 1 then
         printfn "Usage: flox [script]"
         exit(64)
