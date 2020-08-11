@@ -1,8 +1,6 @@
-import 'dart:io';
-
 import 'package:Dart/lox.dart';
 import 'package:Dart/token.dart';
-import 'package:Dart/utilities.dart';
+import 'package:string_validator/string_validator.dart';
 
 class Scanner {
   final String _sourceCode;
@@ -11,22 +9,44 @@ class Scanner {
   int _current = 0;
   int _line = 1;
 
+  final Map<String, TokenType> _keywords = {
+    'and': TokenType.AND,
+    'class': TokenType.CLASS,
+    'else': TokenType.ELSE,
+    'false': TokenType.FALSE,
+    'for': TokenType.FOR,
+    'fun': TokenType.FUN,
+    'if': TokenType.IF,
+    'nil': TokenType.NIL,
+    'or': TokenType.OR,
+    'print': TokenType.PRINT,
+    'return': TokenType.RETURN,
+    'super': TokenType.SUPER,
+    'this': TokenType.THIS,
+    'true': TokenType.TRUE,
+    'var': TokenType.VAR,
+    'while': TokenType.WHILE
+  };
+
   Scanner(this._sourceCode);
 
-  bool isAtEnd() => _current >= _sourceCode.length;
+  bool isAtEnd() {
+    print(_current >= _sourceCode.length);
+    return _current >= _sourceCode.length;
+  }
 
-  String advance() {
+  String _advance() {
     _current++;
     return _sourceCode.substring(_current - 1, _current);
   }
 
   String _peek() {
-    if (isAtEnd()) return '\0';
+    if (isAtEnd()) return '\\0';
     return _sourceCode.substring(_current, _current + 1);
   }
 
   String _peekNext() {
-    if (_current + 1 > _sourceCode.length) return '\0';
+    if (_current + 1 > _sourceCode.length) return '\\0';
     return _sourceCode.substring(_current + 1, _current + 2);
   }
 
@@ -35,7 +55,7 @@ class Scanner {
     _tokens.add(new Token(type, text, literal, _line));
   }
 
-  void addNullToken(TokenType type) {
+  void _addNullToken(TokenType type) {
     addToken(type, null);
   }
 
@@ -50,82 +70,90 @@ class Scanner {
   void string() {
     while (_peek() != '"' && !isAtEnd()) {
       if (_peek() == '\n') _line++;
-      advance();
+      _advance();
     }
     if (isAtEnd()) {
       Lox.error(_line, "Unterminated string");
       return;
     }
-    advance();
+    _advance();
 
     String value = _sourceCode.substring(_start + 1, _current - 1);
     addToken(TokenType.STRING, value);
   }
 
   void number() {
-    while (isDigit(_peek())) {
-      advance();
+    while (isNumeric(_peek())) {
+      _advance();
     }
-    if (_peek() == '.' && isDigit(_peekNext())) {
-      advance();
-      while (isDigit(_peek())) {
-        advance();
+    if (_peek() == '.' && isNumeric(_peekNext())) {
+      _advance();
+      while (isNumeric(_peek())) {
+        _advance();
       }
     }
     addToken(TokenType.NUMBER,
         double.parse(_sourceCode.substring(_start, _current)));
   }
 
+  void _identifier() {
+    while (isAlphanumeric(_peek())) _advance();
+
+    String text = _sourceCode.substring(_start, _current);
+    _addNullToken(_keywords[text]);
+  }
+
   void scanToken() {
-    var c = advance();
+    var c = _advance();
     switch (c) {
       case '(':
-        addNullToken(TokenType.LEFT_PAREN);
+        _addNullToken(TokenType.LEFT_PAREN);
         break;
       case ')':
-        addNullToken(TokenType.RIGHT_PAREN);
+        _addNullToken(TokenType.RIGHT_PAREN);
         break;
       case '{':
-        addNullToken(TokenType.LEFT_BRACE);
+        _addNullToken(TokenType.LEFT_BRACE);
         break;
       case '}':
-        addNullToken(TokenType.RIGHT_BRACE);
+        _addNullToken(TokenType.RIGHT_BRACE);
         break;
       case ',':
-        addNullToken(TokenType.COMMA);
+        _addNullToken(TokenType.COMMA);
         break;
       case '.':
-        addNullToken(TokenType.DOT);
+        _addNullToken(TokenType.DOT);
         break;
       case '-':
-        addNullToken(TokenType.MINUS);
+        _addNullToken(TokenType.MINUS);
         break;
       case '+':
-        addNullToken(TokenType.PLUS);
+        _addNullToken(TokenType.PLUS);
         break;
       case ';':
-        addNullToken(TokenType.SEMICOLON);
+        _addNullToken(TokenType.SEMICOLON);
         break;
       case '*':
-        addNullToken(TokenType.STAR);
+        _addNullToken(TokenType.STAR);
         break;
       case '!':
-        addNullToken(_match("=") ? TokenType.BANG_EQUAL : TokenType.BANG);
+        _addNullToken(_match("=") ? TokenType.BANG_EQUAL : TokenType.BANG);
         break;
       case '=':
-        addNullToken(_match("=") ? TokenType.EQUAL_EQUAL : TokenType.EQUAL);
+        _addNullToken(_match("=") ? TokenType.EQUAL_EQUAL : TokenType.EQUAL);
         break;
       case '<':
-        addNullToken(_match("=") ? TokenType.LESS_EQUAL : TokenType.LESS);
+        _addNullToken(_match("=") ? TokenType.LESS_EQUAL : TokenType.LESS);
         break;
       case '>':
-        addNullToken(_match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
+        _addNullToken(
+            _match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
         break;
       case '/':
         if (_match('/')) {
-          while (_peek() != '\n' && !isAtEnd()) advance();
+          while (_peek() != '\n' && !isAtEnd()) _advance();
         } else {
-          addNullToken(TokenType.SLASH);
+          _addNullToken(TokenType.SLASH);
         }
         break;
       case " ":
@@ -139,19 +167,20 @@ class Scanner {
         string();
         break;
       default:
-        if (isDigit(c)) {
+        if (isNumeric(c)) {
           number();
+        } else if (isAlpha(c)) {
+          _identifier();
+        } else {
+          Lox.error(_line, "Unexpected character $c");
         }
-        Lox.error(_line, "Unexpected character");
     }
   }
 
   List<Token> scanTokens() {
     while (!isAtEnd()) {
       _start = _current;
-      advance();
-      number();
-      //scanToken();
+      scanToken();
     }
     return _tokens;
   }

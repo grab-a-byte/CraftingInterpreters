@@ -7,7 +7,7 @@ class Lox {
   static bool _hadError = false;
 
   static void _report(int line, String where, String message) {
-    stdout.addError("[line ${line}] Error ${where}: ${message}");
+    stdout.addError("[line $line] Error $where: $message");
     _hadError = true;
   }
 
@@ -17,10 +17,13 @@ class Lox {
   }
 
   void _run(String fileText) {
-    Scanner scanner = new Scanner(fileText);
+    Scanner scanner = Scanner(fileText);
     List<Token> tokens = scanner.scanTokens();
+    tokens.forEach(print);
 
-    tokens.forEach((element) => print(element));
+    if (!_hadError) {
+      print("program run");
+    }
   }
 
   void runFile(String filePath) async {
