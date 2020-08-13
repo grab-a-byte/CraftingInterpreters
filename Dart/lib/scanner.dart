@@ -31,7 +31,6 @@ class Scanner {
   Scanner(this._sourceCode);
 
   bool isAtEnd() {
-    print(_current >= _sourceCode.length);
     return _current >= _sourceCode.length;
   }
 
