@@ -1,10 +1,16 @@
 import 'dart:io';
 
+import 'package:Dart/astPrinter.dart';
+import 'package:Dart/errors.dart';
+import 'package:Dart/expressions/expression.dart';
+import 'package:Dart/interpreter.dart';
+import 'package:Dart/parser.dart';
 import 'package:Dart/scanner.dart';
 import 'package:Dart/token.dart';
 
 class Lox {
   static bool _hadError = false;
+  static bool _hadRuntimeError = false;
 
   static void _report(int line, String where, String message) {
     stdout.addError("[line $line] Error $where: $message");
@@ -16,12 +22,33 @@ class Lox {
     _report(line, "", message);
   }
 
+  static void errorWithToken(Token token, String message) {
+    if (token.type == TokenType.EOF) {
+      _report(token.line, " at end", message);
+    } else {
+      _report(token.line, " at '${token.lexeme}'", message);
+    }
+  }
+
+  static void runtimeError(RuntimeError error) {
+    stdout.addError("${error.toString()}\n[line ${error.token.line}]");
+    _hadRuntimeError = true;
+  }
+
+  static final Interpreter _interpreter = Interpreter();
+
   void _run(String fileText) {
     Scanner scanner = Scanner(fileText);
     List<Token> tokens = scanner.scanTokens();
-    tokens.forEach(print);
 
-    if (!_hadError) {
+    Parser parser = Parser(tokens);
+    Expression expression = parser.parse();
+
+    if (_hadError || _hadRuntimeError) {
+      return;
+    } else {
+      _interpreter.interpret(expression);
+      //print(AstPrinter().printAsString(expression));
       print("program run");
     }
   }
@@ -30,6 +57,8 @@ class Lox {
     File file = File(filePath);
     String fileText = await file.readAsString();
     _run(fileText);
+    if (_hadError) exit(65);
+    if (_hadRuntimeError) exit(70);
   }
 
   void runPrompt() {
