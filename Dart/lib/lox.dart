@@ -1,11 +1,10 @@
 import 'dart:io';
 
-import 'package:Dart/astPrinter.dart';
 import 'package:Dart/errors.dart';
-import 'package:Dart/expressions/expression.dart';
 import 'package:Dart/interpreter.dart';
 import 'package:Dart/parser.dart';
 import 'package:Dart/scanner.dart';
+import 'package:Dart/statements/stmt.dart';
 import 'package:Dart/token.dart';
 
 class Lox {
@@ -13,7 +12,7 @@ class Lox {
   static bool _hadRuntimeError = false;
 
   static void _report(int line, String where, String message) {
-    stdout.addError("[line $line] Error $where: $message");
+    print("[line $line] Error $where: $message");
     _hadError = true;
   }
 
@@ -31,7 +30,7 @@ class Lox {
   }
 
   static void runtimeError(RuntimeError error) {
-    stdout.addError("${error.toString()}\n[line ${error.token.line}]");
+    print("${error.toString()}\n[line ${error.token.line}]");
     _hadRuntimeError = true;
   }
 
@@ -42,12 +41,13 @@ class Lox {
     List<Token> tokens = scanner.scanTokens();
 
     Parser parser = Parser(tokens);
-    Expression expression = parser.parse();
+    List<Stmt> statements = parser.parse();
 
     if (_hadError || _hadRuntimeError) {
+      print("error");
       return;
     } else {
-      _interpreter.interpret(expression);
+      _interpreter.interpret(statements);
       //print(AstPrinter().printAsString(expression));
       print("program run");
     }

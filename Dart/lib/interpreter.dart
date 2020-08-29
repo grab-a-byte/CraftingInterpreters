@@ -7,18 +7,26 @@ import 'package:Dart/expressions/expression.dart';
 import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/grouping.dart';
+import 'package:Dart/statements/print_statement.dart';
+import 'package:Dart/statements/expresion_statement.dart';
+import 'package:Dart/statements/stmt.dart';
 import 'package:Dart/token.dart';
 
 import 'lox.dart';
 
-class Interpreter extends Visitor<Object> {
-  void interpret(Expression expr) {
+class Interpreter extends ExprVisitor<Object> with StmtVisitor {
+  void interpret(List<Stmt> statments) {
     try {
-      Object value = _evaluate(expr);
-      print(_stringify(value));
+      for(Stmt statement in statments){
+        _execute(statement);
+      }
     } on RuntimeError catch (error) {
       Lox.runtimeError(error);
     }
+  }
+
+  void _execute(Stmt statement) {
+    statement.accept(this);
   }
 
   String _stringify(Object obj) {
@@ -26,7 +34,7 @@ class Interpreter extends Visitor<Object> {
     return obj.toString();
   }
 
-  Object _evaluate(Expression expr) => expr.accept(this);
+  Object _evaluate(Expr expr) => expr.accept(this);
 
   @override
   Object visitBinaryExpression(Binary node) {
@@ -91,6 +99,17 @@ class Interpreter extends Visitor<Object> {
       default:
         return null;
     }
+  }
+
+  @override
+  void visitExpressionStmt(ExpressionStatement statement) {
+    _evaluate(statement.expression);
+  }
+
+  @override
+  void visitPrintStmt(PrintStatement statement) {
+    Object value = _evaluate(statement.expression);
+    print(_stringify(value));
   }
 
   bool _isTruthy(Object obj) {

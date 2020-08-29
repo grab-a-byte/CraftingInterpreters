@@ -181,6 +181,7 @@ class Scanner {
       _start = _current;
       scanToken();
     }
+    _tokens.add(Token(TokenType.EOF, null, null, _line));
     return _tokens;
   }
 }

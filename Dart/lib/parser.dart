@@ -4,6 +4,9 @@ import 'package:Dart/expressions/grouping.dart';
 import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/lox.dart';
+import 'package:Dart/statements/print_statement.dart';
+import 'package:Dart/statements/stmt.dart';
+import 'package:Dart/statements/expresion_statement.dart';
 import 'package:Dart/token.dart';
 
 class Parser {
@@ -12,30 +15,54 @@ class Parser {
 
   Parser(this._tokens);
 
-  Expression parse() {
+  List<Stmt> parse() {
     try {
-      return _expression();
+      List<Stmt> statements = [];
+      while (!isAtEnd()) {
+        statements.add(statement());
+      }
+      return statements;
     } on Exception {
       return null;
     }
   }
 
-  Expression _expression() {
+  Stmt statement() {
+    if (_match([TokenType.PRINT])) {
+      return printStatement();
+    } else {
+      return expressionStatement();
+    }
+  }
+
+  Stmt printStatement() {
+    Expr value = _expression();
+    consume(TokenType.SEMICOLON, "Expect ';' after value");
+    return PrintStatement(value);
+  }
+
+  Stmt expressionStatement() {
+    Expr value = _expression();
+    consume(TokenType.SEMICOLON, "Expect ';' after value");
+    return ExpressionStatement(value);
+  }
+
+  Expr _expression() {
     return _equality();
   }
 
-  Expression _equality() {
-    Expression expr = _comparrison();
+  Expr _equality() {
+    Expr expr = _comparrison();
     while (_match([TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL])) {
       Token operator = _previous();
-      Expression right = _comparrison();
+      Expr right = _comparrison();
       expr = Binary(expr, operator, right);
     }
     return expr;
   }
 
-  Expression _comparrison() {
-    Expression expr = addition();
+  Expr _comparrison() {
+    Expr expr = addition();
     while (_match([
       TokenType.GREATER,
       TokenType.GREATER_EQUAL,
@@ -43,43 +70,43 @@ class Parser {
       TokenType.LESS_EQUAL
     ])) {
       Token operator = _previous();
-      Expression right = addition();
+      Expr right = addition();
       expr = Binary(expr, operator, right);
     }
 
     return expr;
   }
 
-  Expression addition() {
-    Expression expr = multiplication();
+  Expr addition() {
+    Expr expr = multiplication();
     while (_match([TokenType.MINUS, TokenType.PLUS])) {
       Token operator = _previous();
-      Expression right = multiplication();
+      Expr right = multiplication();
       expr = Binary(expr, operator, right);
     }
     return expr;
   }
 
-  Expression multiplication() {
-    Expression expr = unary();
+  Expr multiplication() {
+    Expr expr = unary();
     while (_match([TokenType.SLASH, TokenType.STAR])) {
       Token operator = _previous();
-      Expression right = unary();
+      Expr right = unary();
       expr = Binary(expr, operator, right);
     }
     return expr;
   }
 
-  Expression unary() {
+  Expr unary() {
     if (_match([TokenType.BANG, TokenType.MINUS])) {
       Token operator = _previous();
-      Expression right = unary();
+      Expr right = unary();
       return Unary(operator, right);
     }
     return primary();
   }
 
-  Expression primary() {
+  Expr primary() {
     if (_match([TokenType.FALSE])) return Literal(false);
     if (_match([TokenType.TRUE])) return Literal(true);
     if (_match([TokenType.NIL])) return Literal(null);
@@ -89,7 +116,7 @@ class Parser {
     }
 
     if (_match([TokenType.LEFT_PAREN])) {
-      Expression expr = _expression();
+      Expr expr = _expression();
       consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
       return Grouping(expr);
     }
@@ -110,12 +137,12 @@ class Parser {
   Token _previous() => _tokens[current - 1];
 
   bool _match(List<TokenType> tokens) {
-    tokens.forEach((element) {
-      if (_check(element)) {
+    for(TokenType type in tokens){
+      if (_check(type)) {
         _advance();
         return true;
       }
-    });
+    }
     return false;
   }
 

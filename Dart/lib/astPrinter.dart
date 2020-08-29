@@ -7,12 +7,12 @@ import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/grouping.dart';
 
-class AstPrinter extends Visitor<String> {
-  String printAsString(Expression expr) {
+class AstPrinter extends ExprVisitor<String> {
+  String printAsString(Expr expr) {
     return expr.accept(this);
   }
 
-  String _parenthesize(String name, List<Expression> expressions) {
+  String _parenthesize(String name, List<Expr> expressions) {
     StringBuffer buffer = StringBuffer();
 
     buffer..write('(')..write(name);
