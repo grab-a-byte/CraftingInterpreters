@@ -1,12 +1,16 @@
+import 'dart:math';
+
 import 'package:Dart/expressions/binary.dart';
 import 'package:Dart/expressions/expression.dart';
 import 'package:Dart/expressions/grouping.dart';
 import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/unary.dart';
+import 'package:Dart/expressions/variable.dart';
 import 'package:Dart/lox.dart';
 import 'package:Dart/statements/print_statement.dart';
 import 'package:Dart/statements/stmt.dart';
 import 'package:Dart/statements/expresion_statement.dart';
+import 'package:Dart/statements/variable_statement.dart';
 import 'package:Dart/token.dart';
 
 class Parser {
@@ -19,7 +23,7 @@ class Parser {
     try {
       List<Stmt> statements = [];
       while (!isAtEnd()) {
-        statements.add(statement());
+        statements.add(_declaration());
       }
       return statements;
     } on Exception {
@@ -27,7 +31,31 @@ class Parser {
     }
   }
 
-  Stmt statement() {
+  Stmt _declaration() {
+    try {
+      if (_match([TokenType.VAR])) {
+        return _varDeclaration();
+      } else {
+        return _statement();
+      }
+    } on Exception {
+      _synchronize();
+      return null;
+    }
+  }
+
+  Stmt _varDeclaration() {
+    Token name = consume(TokenType.IDENTIFIER, "Expect variable name.");
+    // ignore: avoid_init_to_null
+    Expr initializer = null;
+    if (_match([TokenType.EQUAL])) {
+      initializer = _expression();
+    }
+    consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");
+    return VariableStatement(name, initializer);
+  }
+
+  Stmt _statement() {
     if (_match([TokenType.PRINT])) {
       return printStatement();
     } else {
@@ -115,6 +143,10 @@ class Parser {
       return Literal(_previous().literal);
     }
 
+    if (_match([TokenType.IDENTIFIER])) {
+      return Variable(_previous());
+    }
+
     if (_match([TokenType.LEFT_PAREN])) {
       Expr expr = _expression();
       consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
@@ -137,7 +169,7 @@ class Parser {
   Token _previous() => _tokens[current - 1];
 
   bool _match(List<TokenType> tokens) {
-    for(TokenType type in tokens){
+    for (TokenType type in tokens) {
       if (_check(type)) {
         _advance();
         return true;

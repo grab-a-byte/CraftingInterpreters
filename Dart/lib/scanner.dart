@@ -99,7 +99,7 @@ class Scanner {
     while (isAlphanumeric(_peek())) _advance();
 
     String text = _sourceCode.substring(_start, _current);
-    _addNullToken(_keywords[text]);
+    _addNullToken(_keywords[text] ?? TokenType.IDENTIFIER);
   }
 
   void scanToken() {

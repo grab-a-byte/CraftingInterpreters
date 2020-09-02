@@ -1,23 +1,28 @@
 import 'dart:ffi';
 import 'dart:math';
 
+import 'package:Dart/environment.dart';
 import 'package:Dart/errors.dart';
 import 'package:Dart/expressions/binary.dart';
 import 'package:Dart/expressions/expression.dart';
 import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/grouping.dart';
+import 'package:Dart/expressions/variable.dart';
 import 'package:Dart/statements/print_statement.dart';
 import 'package:Dart/statements/expresion_statement.dart';
 import 'package:Dart/statements/stmt.dart';
+import 'package:Dart/statements/variable_statement.dart';
 import 'package:Dart/token.dart';
 
 import 'lox.dart';
 
-class Interpreter extends ExprVisitor<Object> with StmtVisitor {
+class Interpreter implements ExprVisitor<Object>, StmtVisitor {
+  final Environment _environment = Environment();
+
   void interpret(List<Stmt> statments) {
     try {
-      for(Stmt statement in statments){
+      for (Stmt statement in statments) {
         _execute(statement);
       }
     } on RuntimeError catch (error) {
@@ -112,6 +117,16 @@ class Interpreter extends ExprVisitor<Object> with StmtVisitor {
     print(_stringify(value));
   }
 
+  @override
+  void visitVariableStmt(VariableStatement variableStatement) {
+    Object value = null;
+    if (variableStatement.initializer != null) {
+      value = _evaluate(variableStatement.initializer);
+    }
+
+    _environment.define(variableStatement.name.lexeme, value);
+  }
+
   bool _isTruthy(Object obj) {
     if (obj == null) return false;
     if (obj is bool) return obj;
@@ -134,5 +149,10 @@ class Interpreter extends ExprVisitor<Object> with StmtVisitor {
     if (left is double && right is double) return;
 
     throw RuntimeError(operator, "Operands must be numbers");
+  }
+
+  @override
+  Object visitVariableExpression(Variable variable) {
+    return _environment.get(variable.name);
   }
 }
