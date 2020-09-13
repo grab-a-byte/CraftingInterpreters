@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:Dart/environment.dart';
 import 'package:Dart/errors.dart';
+import 'package:Dart/expressions/Assign.dart';
 import 'package:Dart/expressions/binary.dart';
 import 'package:Dart/expressions/expression.dart';
 import 'package:Dart/expressions/unary.dart';
@@ -127,6 +128,18 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor {
     _environment.define(variableStatement.name.lexeme, value);
   }
 
+  @override
+  Object visitVariableExpression(Variable variable) {
+    return _environment.get(variable.name);
+  }
+
+  @override
+  Object visitAssignExpression(Assign assign) {
+    Object value = _evaluate(assign.value);
+    _environment.assign(assign.name, value);
+    return value;
+  }
+
   bool _isTruthy(Object obj) {
     if (obj == null) return false;
     if (obj is bool) return obj;
@@ -149,10 +162,5 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor {
     if (left is double && right is double) return;
 
     throw RuntimeError(operator, "Operands must be numbers");
-  }
-
-  @override
-  Object visitVariableExpression(Variable variable) {
-    return _environment.get(variable.name);
   }
 }

@@ -13,6 +13,10 @@ import 'package:Dart/statements/expresion_statement.dart';
 import 'package:Dart/statements/variable_statement.dart';
 import 'package:Dart/token.dart';
 
+import 'expressions/Assign.dart';
+import 'expressions/variable.dart';
+import 'token.dart';
+
 class Parser {
   final List<Token> _tokens;
   int current = 0;
@@ -75,8 +79,25 @@ class Parser {
     return ExpressionStatement(value);
   }
 
+  Expr _assignment() {
+    Expr expr = _equality();
+    if (_match([TokenType.EQUAL])) {
+      Token equals = _previous();
+      Expr value = _assignment();
+
+      if (expr is Variable) {
+        Token name = expr.name;
+        return Assign(name, value);
+      }
+
+      error(equals, "Invalid Assignment Target");
+    }
+
+    return expr;
+  }
+
   Expr _expression() {
-    return _equality();
+    return _assignment();
   }
 
   Expr _equality() {
