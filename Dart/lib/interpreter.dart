@@ -10,6 +10,7 @@ import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/grouping.dart';
 import 'package:Dart/expressions/variable.dart';
+import 'package:Dart/statements/block.dart';
 import 'package:Dart/statements/print_statement.dart';
 import 'package:Dart/statements/expresion_statement.dart';
 import 'package:Dart/statements/stmt.dart';
@@ -19,7 +20,7 @@ import 'package:Dart/token.dart';
 import 'lox.dart';
 
 class Interpreter implements ExprVisitor<Object>, StmtVisitor {
-  final Environment _environment = Environment();
+  Environment _environment = Environment();
 
   void interpret(List<Stmt> statments) {
     try {
@@ -81,7 +82,6 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor {
       default:
         return null;
     }
-    return null;
   }
 
   @override
@@ -129,6 +129,11 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor {
   }
 
   @override
+  void visitBlockStmt(Block block) {
+    _executeBlock(block.statements, Environment(enclosing: _environment));
+  }
+
+  @override
   Object visitVariableExpression(Variable variable) {
     return _environment.get(variable.name);
   }
@@ -162,5 +167,18 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor {
     if (left is double && right is double) return;
 
     throw RuntimeError(operator, "Operands must be numbers");
+  }
+
+  void _executeBlock(List<Stmt> statements, Environment env) {
+    Environment prev = _environment;
+    try {
+      _environment = env;
+
+      for (Stmt stmt in statements) {
+        _execute(stmt);
+      }
+    } finally {
+      _environment = prev;
+    }
   }
 }

@@ -7,6 +7,7 @@ import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/expressions/variable.dart';
 import 'package:Dart/lox.dart';
+import 'package:Dart/statements/block.dart';
 import 'package:Dart/statements/print_statement.dart';
 import 'package:Dart/statements/stmt.dart';
 import 'package:Dart/statements/expresion_statement.dart';
@@ -62,6 +63,8 @@ class Parser {
   Stmt _statement() {
     if (_match([TokenType.PRINT])) {
       return printStatement();
+    } else if (_match([TokenType.LEFT_BRACE])) {
+      return Block(_block());
     } else {
       return expressionStatement();
     }
@@ -71,6 +74,18 @@ class Parser {
     Expr value = _expression();
     consume(TokenType.SEMICOLON, "Expect ';' after value");
     return PrintStatement(value);
+  }
+
+  List<Stmt> _block() {
+    List<Stmt> statements = <Stmt>[];
+
+    while (!_check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+      statements.add(_declaration());
+    }
+
+    consume(TokenType.RIGHT_BRACE, "Expected '}' after block");
+
+    return statements;
   }
 
   Stmt expressionStatement() {
