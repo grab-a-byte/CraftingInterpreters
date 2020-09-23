@@ -11,6 +11,7 @@ import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/grouping.dart';
 import 'package:Dart/expressions/variable.dart';
 import 'package:Dart/statements/block.dart';
+import 'package:Dart/statements/if_statement.dart';
 import 'package:Dart/statements/print_statement.dart';
 import 'package:Dart/statements/expresion_statement.dart';
 import 'package:Dart/statements/stmt.dart';
@@ -143,6 +144,15 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor {
     Object value = _evaluate(assign.value);
     _environment.assign(assign.name, value);
     return value;
+  }
+
+  @override
+  void visitIfStmt(IfStatement ifStatement) {
+    if (_isTruthy(_evaluate(ifStatement.condition))) {
+      _execute(ifStatement.thenBranch);
+    } else if (ifStatement.elseBranch != null) {
+      _execute(ifStatement.elseBranch);
+    }
   }
 
   bool _isTruthy(Object obj) {

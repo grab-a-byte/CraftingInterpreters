@@ -8,6 +8,7 @@ import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/expressions/variable.dart';
 import 'package:Dart/lox.dart';
 import 'package:Dart/statements/block.dart';
+import 'package:Dart/statements/if_statement.dart';
 import 'package:Dart/statements/print_statement.dart';
 import 'package:Dart/statements/stmt.dart';
 import 'package:Dart/statements/expresion_statement.dart';
@@ -61,8 +62,10 @@ class Parser {
   }
 
   Stmt _statement() {
-    if (_match([TokenType.PRINT])) {
-      return printStatement();
+    if (_match([TokenType.IF])) {
+      return _ifStatement();
+    } else if (_match([TokenType.PRINT])) {
+      return _printStatement();
     } else if (_match([TokenType.LEFT_BRACE])) {
       return Block(_block());
     } else {
@@ -70,7 +73,21 @@ class Parser {
     }
   }
 
-  Stmt printStatement() {
+  Stmt _ifStatement() {
+    consume(TokenType.LEFT_PAREN, "expect '(' after if.");
+    Expr condition = _expression();
+    consume(TokenType.RIGHT_PAREN, "expect ')' after if condition");
+
+    Stmt thenBranch = _statement();
+    Stmt elseBranch = null;
+    if (_match([TokenType.ELSE])) {
+      elseBranch = _statement();
+    }
+
+    return IfStatement(condition, thenBranch, elseBranch);
+  }
+
+  Stmt _printStatement() {
     Expr value = _expression();
     consume(TokenType.SEMICOLON, "Expect ';' after value");
     return PrintStatement(value);
