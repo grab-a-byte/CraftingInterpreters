@@ -7,6 +7,7 @@ import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/logical.dart';
 import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/expressions/variable.dart';
+import 'package:Dart/statements/while_statement.dart';
 import 'package:Dart/lox.dart';
 import 'package:Dart/statements/block.dart';
 import 'package:Dart/statements/if_statement.dart';
@@ -21,6 +22,9 @@ import 'expressions/expression.dart';
 import 'expressions/expression.dart';
 import 'expressions/expression.dart';
 import 'expressions/variable.dart';
+import 'token.dart';
+import 'token.dart';
+import 'token.dart';
 import 'token.dart';
 import 'token.dart';
 import 'token.dart';
@@ -73,6 +77,8 @@ class Parser {
       return _ifStatement();
     } else if (_match([TokenType.PRINT])) {
       return _printStatement();
+    } else if (_match([TokenType.WHILE])) {
+      return _whileStatment();
     } else if (_match([TokenType.LEFT_BRACE])) {
       return Block(_block());
     } else {
@@ -98,6 +104,15 @@ class Parser {
     Expr value = _expression();
     consume(TokenType.SEMICOLON, "Expect ';' after value");
     return PrintStatement(value);
+  }
+
+  Stmt _whileStatment() {
+    consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
+    Expr condition = _expression();
+    consume(TokenType.RIGHT_PAREN, "Expect ')' after condition");
+    Stmt body = _statement();
+
+    return WhileStatement(condition, body);
   }
 
   List<Stmt> _block() {

@@ -1,8 +1,6 @@
-if (nil){
-  print "true";
-} else {
-  print "false";
-}
+var x = 1;
 
-print "hi" or 2; // hi this be a comment
-print nil or "yes";
+while(x < 10){
+  print x;
+  x = x+1;
+}

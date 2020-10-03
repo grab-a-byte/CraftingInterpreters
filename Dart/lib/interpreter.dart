@@ -17,6 +17,7 @@ import 'package:Dart/statements/print_statement.dart';
 import 'package:Dart/statements/expresion_statement.dart';
 import 'package:Dart/statements/stmt.dart';
 import 'package:Dart/statements/variable_statement.dart';
+import 'package:Dart/statements/while_statement.dart';
 import 'package:Dart/token.dart';
 
 import 'lox.dart';
@@ -154,6 +155,13 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor {
       _execute(ifStatement.thenBranch);
     } else if (ifStatement.elseBranch != null) {
       _execute(ifStatement.elseBranch);
+    }
+  }
+
+  @override
+  void visitWhileStmt(WhileStatement whileStatement) {
+    while (_isTruthy(_evaluate(whileStatement.condition))) {
+      _execute(whileStatement.body);
     }
   }
 
