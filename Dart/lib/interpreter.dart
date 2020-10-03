@@ -6,6 +6,7 @@ import 'package:Dart/errors.dart';
 import 'package:Dart/expressions/Assign.dart';
 import 'package:Dart/expressions/binary.dart';
 import 'package:Dart/expressions/expression.dart';
+import 'package:Dart/expressions/logical.dart';
 import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/expressions/literal.dart';
 import 'package:Dart/expressions/grouping.dart';
@@ -19,6 +20,7 @@ import 'package:Dart/statements/variable_statement.dart';
 import 'package:Dart/token.dart';
 
 import 'lox.dart';
+import 'token.dart';
 
 class Interpreter implements ExprVisitor<Object>, StmtVisitor {
   Environment _environment = Environment();
@@ -153,6 +155,19 @@ class Interpreter implements ExprVisitor<Object>, StmtVisitor {
     } else if (ifStatement.elseBranch != null) {
       _execute(ifStatement.elseBranch);
     }
+  }
+
+  @override
+  Object visitLogicalExpression(Logical logical) {
+    Object left = _evaluate(logical.left);
+
+    if (logical.operator.type == TokenType.OR) {
+      if (_isTruthy(left)) return left;
+    } else {
+      if (!_isTruthy(left)) return left;
+    }
+
+    return _evaluate(logical.right);
   }
 
   bool _isTruthy(Object obj) {

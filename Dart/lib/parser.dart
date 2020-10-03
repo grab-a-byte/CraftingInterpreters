@@ -4,6 +4,7 @@ import 'package:Dart/expressions/binary.dart';
 import 'package:Dart/expressions/expression.dart';
 import 'package:Dart/expressions/grouping.dart';
 import 'package:Dart/expressions/literal.dart';
+import 'package:Dart/expressions/logical.dart';
 import 'package:Dart/expressions/unary.dart';
 import 'package:Dart/expressions/variable.dart';
 import 'package:Dart/lox.dart';
@@ -16,7 +17,13 @@ import 'package:Dart/statements/variable_statement.dart';
 import 'package:Dart/token.dart';
 
 import 'expressions/Assign.dart';
+import 'expressions/expression.dart';
+import 'expressions/expression.dart';
+import 'expressions/expression.dart';
 import 'expressions/variable.dart';
+import 'token.dart';
+import 'token.dart';
+import 'token.dart';
 import 'token.dart';
 
 class Parser {
@@ -112,7 +119,7 @@ class Parser {
   }
 
   Expr _assignment() {
-    Expr expr = _equality();
+    Expr expr = _or();
     if (_match([TokenType.EQUAL])) {
       Token equals = _previous();
       Expr value = _assignment();
@@ -125,6 +132,28 @@ class Parser {
       error(equals, "Invalid Assignment Target");
     }
 
+    return expr;
+  }
+
+  Expr _or() {
+    Expr expr = _and();
+
+    while (_match([TokenType.OR])) {
+      Token operator = _previous();
+      Expr right = _and();
+      expr = Logical(expr, operator, right);
+    }
+    return expr;
+  }
+
+  Expr _and() {
+    Expr expr = _equality();
+
+    while (_match([TokenType.AND])) {
+      Token operator = _previous();
+      Expr right = _equality();
+      expr = Logical(expr, operator, right);
+    }
     return expr;
   }
 

@@ -51,7 +51,7 @@ class Scanner {
 
   void addToken(TokenType type, Object literal) {
     String text = _sourceCode.substring(_start, _current);
-    _tokens.add(new Token(type, text, literal, _line));
+    _tokens.add(Token(type, text, literal, _line));
   }
 
   void _addNullToken(TokenType type) {
@@ -60,7 +60,7 @@ class Scanner {
 
   bool _match(String expected) {
     if (isAtEnd()) return false;
-    if (_sourceCode.substring(_current) != expected) return false;
+    if (_sourceCode.substring(_current, _current + 1) != expected) return false;
 
     _current++;
     return true;
@@ -96,7 +96,9 @@ class Scanner {
   }
 
   void _identifier() {
-    while (isAlphanumeric(_peek())) _advance();
+    while (isAlphanumeric(_peek())) {
+      _advance();
+    }
 
     String text = _sourceCode.substring(_start, _current);
     _addNullToken(_keywords[text] ?? TokenType.IDENTIFIER);
@@ -150,7 +152,9 @@ class Scanner {
         break;
       case '/':
         if (_match('/')) {
-          while (_peek() != '\n' && !isAtEnd()) _advance();
+          while (_peek() != '\n' && !isAtEnd()) {
+            _advance();
+          }
         } else {
           _addNullToken(TokenType.SLASH);
         }

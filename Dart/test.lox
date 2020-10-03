@@ -3,3 +3,6 @@ if (nil){
 } else {
   print "false";
 }
+
+print "hi" or 2; // hi this be a comment
+print nil or "yes";
